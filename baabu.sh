@@ -1,6 +1,7 @@
 #!/bin/bash
 #
-#       baabu=better all-around backup
+#       baabu 
+#         better all-around backup
 # 
 #       New backup method which grooms moved and deleted files
 #       Two modes of operation (M, B)
