@@ -6,19 +6,21 @@
 #       New backup method which grooms moved and deleted files
 #       Two modes of operation (M, B)
 # 
-#       M = Migrate 
-#           Make an updated copy of source on target
-#           Remove files from target which are no longer on source
-#
-#       B = Backup
-#           Make an updated backup of files from source to target
-#           Do not remove deleted files
-#       
-#       
 # TDORSEY 2022-04-02 Created
 # TDORSEY 2022-04-04 Safety checks around GLOBAL CACHE clearing
+# TDORSEY 2022-04-10 Iterate through array of config items
+#                    specified in /etc/baabu.conf
+# TDORSEY 2022-04-12 Separate log files for each loop iteration
+#                    to improve flexibility     
+# TDORSEY 2022-04-13 Fixed log filename, added support for LOG_LEVEL
 
-source /etc/baabu.conf
+  
+if [ -f "/etc/baabu.conf" ]; then
+  source /etc/baabu.conf
+else 
+  echo "/etc/baabu.conf not found"
+  exit 1
+fi
 
 # this script uses sudo
 sudo -v
@@ -28,24 +30,25 @@ sudo -v
 #
 #
 prog=$(basename $0)
+echo prog=$prog
 today=`date +%Y%m%d_%H%M%S`
-log=/tmp/$prog__$today.log 
-
-
+echo today=$today
+log=`echo /tmp/$prog\_\_\_$today.log`
+echo log=$log
 # 
 # LOCK THREAD
 #
 #
 if [ "$prog" = "bash" ]; then
   logger -s -t $prog "Do not run as source"
-  return 1
+  exit 1
 elif test -f "/tmp/$prog.lock"; then
   logger -s -t $prog "$prog is already running $today" 
-  return 1
+  exit 1
 else
   logger -s -t $prog "Starting $prog" 
   logger -s -t $prog "Today is $today"
-  logger -s -t $prog "Log is $log" 
+  logger -s -t $prog "Log is $log"
   echo "Starting $prog at $today" | tee $log > /tmp/$prog.lock 
 fi
 
@@ -55,8 +58,6 @@ fi
 #
 #
 banner $prog 
-DID_STUFF="N"
-
 #
 #
 # GLOBAL CACHE
@@ -72,7 +73,8 @@ elif [ ! -d "$GLOBAL_CACHE" ]; then
 elif [[ "$GLOBAL_CACHE" == *"$keyword"* ]]; then
   logger -s -t $prog "Clear Cache $GLOBAL_CACHE"
   find $GLOBAL_CACHE -type f -exec rm -v {} \; | tee -a $log
-  DID_STUFF="Y"
+  decached=`grep removed $log | wc -l`
+  logger -s -t $prog "$decached files removed from cache" 
 else 
   logger -s -t $prog "Invalid cache $GLOBAL_CACHE missing keyword $keyword"
 fi
@@ -82,49 +84,52 @@ fi
 # RSYNC 
 #
 #
-USER=$1
-MODE=$2
-if [ $# -eq 0 ]; then
-  logger -s -t $prog "No backup arguments specified" 
-elif [ -z "$USER" ]; then
-  logger -s -t $prog "No user specified"
-elif [ ! -d "/home/$USER" ]; then
-  logger -s -t $prog "No home for $USER found" 
-elif [ "$MODE" = "M" ]; then
-  logger -s -t $prog "Migrate mode for user $USER"
-  logger -s -t $prog "rsync with delete option" 
-  logger -s -t $prog "Source /home/$USER"
-  logger -s -t $prog "Target $MIGRATION_TARGET/$USER/"
-  echo rsync -avv --delete --progress -e ssh /home/$USER $MIGRATION_USER:$MIGRATION_TARGET/$USER/ | tee -a $log
-  #sudo rsync -avv --delete --progress -e ssh /home/$USER $MIGRATION_USER:$MIGRATION_TARGET/$USER/ | tee -a $log
-  DID_STUFF="Y"
-elif [ "$MODE" = "B" ]; then
-  logger -s -t $prog "Backup mode for user $USER"
-  logger -s -t $prog "rsync with no delete option"
-else
-  logger -s -t $prog "Unrecognized option $MODE for user $USER"
-fi
-
+for i in "${!FROM_USER[@]}";
+do 
+  logger -s -t $prog "Begin Section $i"
+  FROM_USER="${FROM_USER[$i]}"
+  TO_USER="${TO_USER[$i]}" 
+  TO_PATH="${TO_PATH[$i]}"
+  MODE="${MODE[$i]}"
+  ilog=`echo /tmp/$prog\_$i\_$today.log`
+  echo FROM_USER=$FROM_USER | tee -a $ilog
+  echo TO_USER=$TO_USER | tee -a $ilog
+  echo TO_PATH=$TO_PATH | tee -a $ilog
+  echo MODE=$MODE | tee -a $ilog
+  echo ilog=$ilog | tee -a $ilog
+  if [ -z "$FROM_USER" ]; then
+    logger -s -t $prog "No user specified"
+  elif [ ! -d "/home/$FROM_USER" ]; then
+    logger -s -t $prog "No home for $FROM_USER found" 
+  elif [ "$MODE" = "M" ] || [ "$MODE" = "B" ] ; then
+    if [ "$MODE" = "M" ]; then
+       MODE_DESC=Migration
+       DELETE_CLAUSE="--delete"
+    else
+       MODE_DESC=Backup
+       DELETE_CLAUSE=""
+    fi
+    logger -s -t $prog "$MODE_DESC mode for user $FROM_USER"
+    logger -s -t $prog "rsync $DELETE_CLAUSE"
+    logger -s -t $prog "Source /home/$FROM_USER"
+    logger -s -t $prog "Target $TO_USER"
+    logger -s -t $prog "Target Path $TO_PATH/$FROM_USER/"
+    logger -s -t $prog "rsync -avv $DELETE_CLAUSE --progress -e ssh /home/$FROM_USER $TO_USER:$TO_PATH/$FROM_USER/ "
+    echo rsync -avv $DELETE_CLAUSE --progress -e ssh /home/$FROM_USER $TO_USER:$TO_PATH/$FROM_USER/ | tee -a $ilog
+    #rsync -avv $DELETE_CLAUSE --progress -e ssh /home/$FROM_USER $TO_USER:$TO_PATH/$FROM_USER/ | tee -a $ilog
+    skipped=`grep uptodate $ilog | wc -l`
+    deleted=`grep deleting $ilog | wc -l`
+    backedup=`grep 100\% $ilog | wc -l`
+    logger -s -t $prog "$skipped unchanged files were skipped" 
+    logger -s -t $prog "$deleted files removed, no longer on source" 
+    logger -s -t $prog "$backedup files backed up" 
+    logger -s -t $prog "Detailed log at $ilog"
+  else
+    logger -s -t $prog "Unrecognized option $MODE for user $USER"
+  fi
+  logger -s -t $prog "End Section $i"
+done
 #
-#
-# FOOTER
-#
-banner done
-if [ "$DID_STUFF" = "Y" ]; then
-  decached=`grep removed $log | wc -l`
-  skipped=`grep uptodate $log | wc -l`
-  deleted=`grep deleting $log | wc -l`
-  backedup=`grep 100\% $log | wc -l`
-  logger -s -t $prog "Detailed log in $log" 
-  logger -s -t $prog "$skipped unchanged files were skipped" 
-  logger -s -t $prog "$deleted files removed, no longer on source" 
-  logger -s -t $prog "$decached files removed from cache" 
-  logger -s -t $prog "$backedup files backed up" 
-else
-  logger -s -t $prog "Did nothing"
-fi
-
-
 #
 #
 # UNLOCK THREAD
