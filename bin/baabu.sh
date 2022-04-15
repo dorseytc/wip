@@ -13,7 +13,7 @@
 # TDORSEY 2022-04-12 Separate log files for each loop iteration
 #                    to improve flexibility     
 # TDORSEY 2022-04-13 Fixed log filename, added support for LOG_LEVEL
-
+# TDORSEY 2022-04-15 
   
 if [ -f "/etc/baabu.conf" ]; then
   source /etc/baabu.conf
@@ -84,9 +84,12 @@ fi
 # RSYNC 
 #
 #
+sectioncount=0
+processcount=0
 for i in "${!FROM_USER[@]}";
 do 
   logger -s -t $prog "Begin Section $i"
+  sectioncount=$((sectioncount+1))
   FROM_USER="${FROM_USER[$i]}"
   TO_USER="${TO_USER[$i]}" 
   TO_PATH="${TO_PATH[$i]}"
@@ -99,8 +102,10 @@ do
   echo ilog=$ilog | tee -a $ilog
   if [ -z "$FROM_USER" ]; then
     logger -s -t $prog "No user specified"
+    echo "No user specified" >> $ilog
   elif [ ! -d "/home/$FROM_USER" ]; then
     logger -s -t $prog "No home for $FROM_USER found" 
+    echo "No home for $FROM_USER found" >> $ilog
   elif [ "$MODE" = "M" ] || [ "$MODE" = "B" ] ; then
     if [ "$MODE" = "M" ]; then
        MODE_DESC=Migration
@@ -109,6 +114,7 @@ do
        MODE_DESC=Backup
        DELETE_CLAUSE=""
     fi
+    processcount=$((processcount+1))
     logger -s -t $prog "$MODE_DESC mode for user $FROM_USER"
     logger -s -t $prog "rsync $DELETE_CLAUSE"
     logger -s -t $prog "Source /home/$FROM_USER"
@@ -136,4 +142,5 @@ done
 #
 #
 rm /tmp/$prog.lock
-logger -s -t $prog "Stopping $prog" 
+logger -s -t $prog `echo Processed $processcount of $sectioncount Sections`
+
