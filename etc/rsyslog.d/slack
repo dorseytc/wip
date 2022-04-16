@@ -1,0 +1,21 @@
+#
+# /etc/logrotate.d/slack
+#
+# Current version of slack generates too many error messages
+# flooding /var/log/syslog
+# Rather than discarding these messages
+# I sweep them into a dedicated slack log
+# until such time as verbosity for slack messages
+# is fixed
+#
+# TDORSEY 2022-04-08 Created
+
+/var/log/slack/slack.log {
+        missingok
+	weekly
+	rotate 7
+	compress
+	missingok
+	notifempty
+	create 666 root root
+}
