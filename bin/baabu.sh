@@ -12,8 +12,8 @@
 #                    specified in /etc/baabu.conf
 # TDORSEY 2022-04-12 Separate log files for each loop iteration
 #                    to improve flexibility     
-# TDORSEY 2022-04-13 Fixed log filename, added support for LOG_LEVEL
-# TDORSEY 2022-04-15 
+# TDORSEY 2022-04-13 Fixed log filename
+# TDORSEY 2022-04-15 Improved logging, iteration counters
   
 if [ -f "/etc/baabu.conf" ]; then
   source /etc/baabu.conf
@@ -121,8 +121,8 @@ do
     logger -s -t $prog "Target $TO_USER"
     logger -s -t $prog "Target Path $TO_PATH/$FROM_USER/"
     logger -s -t $prog "rsync -avv $DELETE_CLAUSE --progress -e ssh /home/$FROM_USER $TO_USER:$TO_PATH/$FROM_USER/ "
-    echo rsync -avv $DELETE_CLAUSE --progress -e ssh /home/$FROM_USER $TO_USER:$TO_PATH/$FROM_USER/ | tee -a $ilog
-    #rsync -avv $DELETE_CLAUSE --progress -e ssh /home/$FROM_USER $TO_USER:$TO_PATH/$FROM_USER/ | tee -a $ilog
+    echo sudo rsync -avv $DELETE_CLAUSE --progress -e ssh /home/$FROM_USER $TO_USER:$TO_PATH/$FROM_USER/ | tee -a $ilog
+    sudo rsync -avv $DELETE_CLAUSE --progress -e  ssh /home/$FROM_USER $TO_USER:$TO_PATH/$FROM_USER/ | tee -a $ilog
     skipped=`grep uptodate $ilog | wc -l`
     deleted=`grep deleting $ilog | wc -l`
     backedup=`grep 100\% $ilog | wc -l`
