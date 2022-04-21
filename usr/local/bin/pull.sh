@@ -5,19 +5,25 @@
 # pull updated scripts from other sources into working repository
 # 
 # TDORSEY 2022-04-18 Created 
-#
+# TDORSEY 2022-04-20 Improved pulling, no backups
+#                    The source was in git to begin with
+#                    so what are you worried about
 
 source_dir=$1
 search_str=$2
+target_dir=$3
 datetime=`date +%Y%m%d_%H%M%S`
 filecount=0
 pullcount=0
 echo Running at ${datetime}
-if [ -z "${source_dir}" ] || [ -z "${search_str}" ]; then
-  echo "usage: $0 source_dir search_str"
+if [ -z "${source_dir}" ] || [ -z "${search_str}" ] || [ -z "${target_dir}" ]; then
+  echo "usage: $0 source_dir search_str target_dir"
 elif [ ! -d "${source_dir}" ]; then
   echo "Source directory $source_dir not found"
+elif [ ! -d "${target_dir}" ]; then
+  echo "Target directory $target_dir not found"
 else
+  cd $target_dir
   diff_ct=`git diff --stat origin/main | wc -l`
   echo "Diff count is $diff_ct"
   if [[ $diff_ct -eq 0  ]]; then
@@ -25,10 +31,12 @@ else
     echo Files to be reviewed:
     cat /tmp/pull.list
     echo End of list
-    cat /tmp/pull.list | while read f; do
-      filecount=$((filecount+1))
+    while read f ; 
+    do
+      ((filecount=filecount+1))
+      echo Filecount is $filecount
       echo File is $f
-      target_file=${target_dir}/$f
+      target_file=${target_dir}${f}
       echo Target file is $target_file
       if [ -f "${target_file}" ]; then
         diffcount=`diff -q $f $target_file | wc -l`
@@ -43,16 +51,27 @@ else
         echo File "${target_file}" not found
         pull=Y
       fi 
+      target_path="$(dirname $target_file)"
+      echo Target path is $target_path
+      if [ ! -d "${target_path}" ]; then
+        mkdir -p $target_path
+        echo Created ${target_path}
+      else
+        echo Target path $target_path exists
+      fi 
       if [ "$pull" = "Y" ]; then
-        cp -a $f ${target_file}
-        echo $f pulled to ${target_file}
-        pullcount=$((pullcount+1))
+        rsync -a $f $target_path
+        echo $f pulled to ${target_path}
+        ((pullcount=pullcount+1))
       fi
-    done; 
+    done < /tmp/pull.list 
   else
     echo "${target_dir} needs a push"
   fi
 fi
+echo Filecount $filecount
+echo Pullcount $pullcount
+
 if [ "$filecount" -gt 0 ]; then
   echo Pulled $pullcount of $filecount files
 else
