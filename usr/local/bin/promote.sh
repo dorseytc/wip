@@ -5,6 +5,8 @@
 #
 filecount=0
 promotecount=0
+timestamp=`date +%Y%m%d_%H%M%S`
+echo timestamp is $timestamp
 for var in "$@"
 do 
   echo Promoting $var
@@ -20,9 +22,9 @@ do
           mkdir .backup
           echo created directory .backup
         fi  
-        sudo mv /usr/local/bin/$var .backup/$var
-        echo backed up $var to .backup/$var
-        diff $var .backup/$var > .backup/$var.diff
+        sudo mv /usr/local/bin/${var} .backup/${var}.${timestamp}
+        echo backed up $var to .backup/$var.${timestamp}
+        diff $var .backup/${var}.${timestamp} > .backup/$var.diff.${timestamp}
       else
         promote=N
         echo Files are identical
