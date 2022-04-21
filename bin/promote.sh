@@ -1,9 +1,7 @@
 #!/bin/bash
-#
 # Promote a file to /usr/local/bin and set permissions
 #
 #  TDORSEY 2022-02-03  Created
-#  
 #
 filecount=0
 promotecount=0

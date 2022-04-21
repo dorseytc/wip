@@ -12,8 +12,8 @@
 #                    specified in /etc/baabu.conf
 # TDORSEY 2022-04-12 Separate log files for each loop iteration
 #                    to improve flexibility     
-# TDORSEY 2022-04-13 Fixed log filename
-# TDORSEY 2022-04-15 Improved logging, iteration counters
+# TDORSEY 2022-04-13 Fixed log filename, added support for LOG_LEVEL
+# TDORSEY 2022-04-15 
   
 if [ -f "/etc/baabu.conf" ]; then
   source /etc/baabu.conf
