@@ -28,7 +28,7 @@ else
     cat /tmp/pull.list | while read f; do
       filecount=$((filecount+1))
       echo File is $f
-      target_file="./$(basename $f)" 
+      target_file=${target_dir}/$f
       echo Target file is $target_file
       if [ -f "${target_file}" ]; then
         diffcount=`diff -q $f $target_file | wc -l`
@@ -44,7 +44,7 @@ else
         pull=Y
       fi 
       if [ "$pull" = "Y" ]; then
-        cp $f ${target_file}
+        cp -a $f ${target_file}
         echo $f pulled to ${target_file}
         pullcount=$((pullcount+1))
       fi
