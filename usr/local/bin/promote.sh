@@ -2,6 +2,7 @@
 # Promote a file to /usr/local/bin and set permissions
 #
 #  TDORSEY 2022-02-03  Created
+#  TDORSEY 2022-04-20  Added timestamp to local backups
 #
 filecount=0
 promotecount=0
