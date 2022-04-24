@@ -6,7 +6,7 @@
 # 
 # TDORSEY 2022-04-18 Created 
 # TDORSEY 2022-04-20 Improved pulling, no backups
-#                    The source was in git to begin with
+#                    the source was in git to begin with
 #                    so what are you worried about
 
 source_dir=$1
@@ -25,6 +25,7 @@ elif [ ! -d "${target_dir}" ]; then
 else
   cd $target_dir
   diff_ct=`git diff --stat origin/main | wc -l`
+  #check if there are uncommited things in git
   echo "Diff count is $diff_ct"
   if [[ $diff_ct -eq 0  ]]; then
     sudo find $source_dir -type f -exec grep -l $search_str {} \; > /tmp/pull.list
