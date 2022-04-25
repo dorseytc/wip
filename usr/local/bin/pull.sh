@@ -37,7 +37,7 @@ else
       ((filecount=filecount+1))
       echo "${filecount} : File is ${f}"
       secrets=`grep -l SECRET ${f} | wc -l`
-      if [ $secrets -eq 0 ]; then
+      if [ $secrets -ne 0 ]; then
         echo Skipping secret $f
       else
         target_file=${target_dir}${f}
