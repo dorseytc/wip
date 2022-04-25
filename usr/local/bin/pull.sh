@@ -28,42 +28,46 @@ else
   #check if there are uncommited things in git
   echo "Diff count is $diff_ct"
   if [[ $diff_ct -eq 0  ]]; then
-    sudo find $source_dir -type f -exec grep -l $search_str {} \; > /tmp/pull.list
+    sudo find $source_dir -type f -exec grep -l $search_str {} \;  > /tmp/pull.list
     echo Files to be reviewed:
     cat /tmp/pull.list
     echo End of list
     while read f ; 
     do
       ((filecount=filecount+1))
-      echo Filecount is $filecount
-      echo File is $f
-      target_file=${target_dir}${f}
-      echo Target file is $target_file
-      if [ -f "${target_file}" ]; then
-        diffcount=`diff -q $f $target_file | wc -l`
-        if [ $diffcount -eq 1 ]; then
-          echo Files are different
-	        pull=Y
+      echo "${filecount} : File is ${f}"
+      secrets=`grep -l SECRET ${f} | wc -l`
+      if [ $secrets -eq 0 ]; then
+        echo Skipping $f
+      else
+        target_file=${target_dir}${f}
+        echo Target file is $target_file
+        if [ -f "${target_file}" ]; then
+          diffcount=`diff -q $f $target_file | wc -l`
+          if [ $diffcount -eq 1 ]; then
+            echo Files are different
+	          pull=Y
+          else
+            echo Files are identical
+	          pull=N
+          fi
         else
-          echo Files are identical
-	        pull=N
+          echo File "${target_file}" not found
+          pull=Y
+        fi 
+        target_path="$(dirname $target_file)"
+        echo Target path is $target_path
+        if [ ! -d "${target_path}" ]; then
+          mkdir -p $target_path
+          echo Created ${target_path}
+        else
+          echo Target path $target_path exists
+        fi 
+        if [ "$pull" = "Y" ]; then
+          rsync -a $f $target_path
+          echo $f pulled to ${target_path}
+          ((pullcount=pullcount+1))
         fi
-      else
-        echo File "${target_file}" not found
-        pull=Y
-      fi 
-      target_path="$(dirname $target_file)"
-      echo Target path is $target_path
-      if [ ! -d "${target_path}" ]; then
-        mkdir -p $target_path
-        echo Created ${target_path}
-      else
-        echo Target path $target_path exists
-      fi 
-      if [ "$pull" = "Y" ]; then
-        rsync -a $f $target_path
-        echo $f pulled to ${target_path}
-        ((pullcount=pullcount+1))
       fi
     done < /tmp/pull.list 
   else
