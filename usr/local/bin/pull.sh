@@ -37,9 +37,9 @@ else
     while read f ; 
     do
       ((filecount=filecount+1))
-      echo "${filecount} : Pull ${f} to ${target_file}"
       target_file=${target_dir}${f}
       secrets=`grep -l SECRET ${f} | wc -l`
+      echo "${filecount} : Pull ${f} to ${target_file}"
       if [ $secrets -ne 0 ]; then
         reason="Skipping secret ${f}"
         pull=N
