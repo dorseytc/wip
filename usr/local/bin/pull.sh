@@ -58,7 +58,7 @@ else
         target_path="$(dirname $target_file)"
         if [ ! -d "${target_path}" ]; then
           mkdir -p $target_path
-          echo Created ${target_path}
+          echo "Created ${target_path}"
         fi 
       fi
       if [ "$pull" = "Y" ]; then
@@ -66,7 +66,7 @@ else
         echo "${f} pulled to ${target_path} (${reason})"
         ((pullcount=pullcount+1))
       else
-        echo "${f} skipped ($reason})"
+        echo "${f} skipped (${reason})"
         ((skipcount=skipcount+1))
       fi
     done < /tmp/pull.list 
