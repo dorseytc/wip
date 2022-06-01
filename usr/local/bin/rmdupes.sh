@@ -10,6 +10,8 @@ echo ""
 #MAX=2000000000
 #500 MB
 MAX=500000000
+MIN=1000
+echo Min size is $MIN 
 echo Max size is $MAX
 if [ $# -lt 2 ] ; then
   echo "Wrong arguments provided"
@@ -24,11 +26,11 @@ elif [ ! -d "$1" ] ; then
 elif [ $2 = "Y" ] || [ $2 = "y" ] ; then
   echo "You chose the DELETE option!  CTRL-C if incorrect"
   progname=rm
-  option="-rdN --maxsize=$MAX"
+  option="-rdN --maxsize=$MAX --minsize=$MIN"
 elif [ $2 = "N" ] || [ $2 = "n" ] ; then
   echo "You chose the LIST option!  CTRL-C if incorrect"
   progname=ls
-  option="-r --maxsize=$MAX"
+  option="-r --maxsize=$MAX --minsize=$MIN"
 else
   echo "Unrecognized value for <delete-yn>"
   echo ""
