@@ -7,8 +7,8 @@
 # TDORSEY 2202-03-24 Standardize $logfile and $lock usage throughout
 #                    Parameterize world location, executable name
 #                    and output folder
+# TDORSEY 2202-09-27 Fix lock bug; add FORCE mode
 #                    
-
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
 min=`date +%M`
 echo Minute = $min
@@ -38,7 +38,11 @@ echo Number of empty runs $empty_run_ct
 #
 date | tee $logfile
 
-if test -f "$lockfile"; then
+
+if [ "$1" = "FORCE" ]; then
+  echo "mappit is in FORCE mode" |tee -a $logfile
+  update_map="Y"
+elif test -f "$lock"; then
   echo "mappit is already running" |tee -a $logfile
   update_map="N" 
 else
@@ -92,6 +96,8 @@ else
   # running the mapper executable 
   # 
 
+  echo mapper command string | tee -a $logfile
+  echo $mapper_exe $world_location $output_folder | tee -a $logfile
   $mapper_exe $world_location $output_folder | tee -a $logfile
 
   # 
