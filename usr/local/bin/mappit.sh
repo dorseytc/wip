@@ -8,6 +8,8 @@
 #                    Parameterize world location, executable name
 #                    and output folder
 # TDORSEY 2202-09-27 Fix lock bug; add FORCE mode
+# TDORSEY 2202-09-28 Add config file
+# TDORSEY 2202-10-04 Use pre-release minecraft overviewer
 #                    
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
 min=`date +%M`
@@ -19,12 +21,15 @@ echo Lock = $lock
 #
 # installation specific variables 
 #
-mapper_exe=/home/ted/Minecraft/Overviewer/overviewer.py 
+mapper_exe=/home/ted/Minecraft/Overviewer/Minecraft-Overviewer/overviewer.py 
 echo Mapper executable = $mapper_exe
-world_location=/home/ted/Minecraft/world/ 
-echo World = $world_location
-output_folder=/home/www/www/html/kingjulius 
-echo Output folder = $output_folder
+#mapper_opt="--no-tile-checks"
+#mapper_opt="--check-tiles"
+#mapper_opt="--forcerender"
+#mapper_opt="--verbose"
+echo Mapper options = $mapper_opt
+config_file=/home/ted/Minecraft/Overviewer/config.py
+echo Config File = $config_file
 #
 # runtime-computed variables
 server_proc_ct=$(ps -ef | grep "Minecraft\/server.jar" | wc -l)
@@ -42,6 +47,7 @@ date | tee $logfile
 if [ "$1" = "FORCE" ]; then
   echo "mappit is in FORCE mode" |tee -a $logfile
   update_map="Y"
+  mapper_opt="--forcerender"
 elif test -f "$lock"; then
   echo "mappit is already running" |tee -a $logfile
   update_map="N" 
@@ -97,8 +103,8 @@ else
   # 
 
   echo mapper command string | tee -a $logfile
-  echo $mapper_exe $world_location $output_folder | tee -a $logfile
-  $mapper_exe $world_location $output_folder | tee -a $logfile
+  echo $mapper_exe --config=$config_file $mapper_opt | tee -a $logfile
+  $mapper_exe --config=$config_file $mapper_opt | tee -a $logfile
 
   # 
   #
