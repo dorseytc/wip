@@ -10,11 +10,12 @@
 # TDORSEY 2202-09-27 Fix lock bug; add FORCE mode
 # TDORSEY 2202-09-28 Add config file
 # TDORSEY 2202-10-04 Use pre-release minecraft overviewer
+# TDORSEY 2202-12-30 Run every hour instead
 #                    
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
-min=`date +%M`
-echo Minute = $min
-logfile=/tmp/mappit.$min.log
+hour=`date +%H`
+echo Hour = $hour
+logfile=/tmp/mappit.$hour.log
 echo Logfile = $logfile
 lock=/tmp/mappit.lock
 echo Lock = $lock
